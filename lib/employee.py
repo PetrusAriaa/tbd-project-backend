@@ -18,12 +18,26 @@ class Employee:
             c.execute('SELECT * FROM staff')
             data = c.fetchall()
             
+            res = []
+            for col in data:
+                staff = {
+                    "staff_id": col[0],
+                    "name": col[1],
+                    "hire_date": col[2],
+                    "address": col[3],
+                    "sex": col[4],
+                    "is_manager": col[5],
+                }
+                res.append(staff)
+            
             c.close()
             db.close()
             
-            return str(data)
+            return res
         
         except (psycopg2.Error, psycopg2.DatabaseError) as err:
             c.close()
             db.close()
             return f'Error while connecting to PostgreSQL Database: {err}'
+    
+    

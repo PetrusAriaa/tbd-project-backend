@@ -3,10 +3,10 @@ import psycopg2
 from config import CREDENTIALS
 
 
-class Store:
+class Transaction:
     
     
-    def get_stores():
+    def get_transaction(store_id):
         try:
             db = psycopg2.connect(host=CREDENTIALS['HOSTNAME'],
                                 port=CREDENTIALS['PORT'],
@@ -15,20 +15,26 @@ class Store:
                                 password=CREDENTIALS['PASSWORD']
                                 )
             c = db.cursor()
-            c.execute('SELECT * FROM store')
+            c.execute(f'SELECT * FROM bought WHERE store={store_id}')
             data = c.fetchall()
             
-            res = []
+            items = []
+            
             for col in data:
-                store = {
-                    "store_id": col[0],
-                    "manager": col[1],
-                    "street": col[2],
-                    "city": col[3],
-                    "state": col[4],
-                    "country": col[5],
+                transactions = {
+                    "trabs_id": col[0],
+                    "date": col[2],
+                    "custnum": col[3],
+                    "bnum": col[4],
+                    "price": col[5],
+                    "quantity": col[6],
                 }
-                res.append(store)
+                items.append(transactions)
+                
+            res = {
+                "store_id": store_id,
+                "items": items,
+            }
             
             c.close()
             db.close()
