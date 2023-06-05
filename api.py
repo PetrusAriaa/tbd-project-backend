@@ -12,14 +12,23 @@ from lib.transaction import Transaction
 app = Flask(__name__)
 CORS(app)
 
-@app.route('/books', methods=['GET', 'POST'])
-def books():
+@app.route('/<int:store_id>/books', methods=['GET', 'POST'])
+def books(store_id):
     
     if request.method == 'GET':
         try:
-            data = Book.get_books()
-            res = jsonify(data)
-            return res
+            data, msg = Book.get_books(store_id)
+            res = jsonify({
+                "items": data,
+                "length": len(data),
+                "message": msg
+            })
+            if msg == "success":
+                return make_response(res, 200)
+            elif msg == "Not Found!":
+                return make_response(res, 404)
+            else:
+                return make_response(res, 500)
         except Exception as err:
             return err
     
@@ -28,7 +37,6 @@ def books():
             data = request.get_json()
             req = {
                 "store": data.get('store'),
-                "book_number": data.get('book_number'),
                 "book_name": data.get('book_name'),
                 "publication_year": data.get('publication_year'),
                 "pages": data.get('pages'),
@@ -36,23 +44,33 @@ def books():
                 "quantity": data.get('quantity'),
                 "price": data.get('price'),
             }
-            res = Book.add_book(req)
-            if res == 0:
-                return jsonify({"message": "Operation Success"})
+            msg = Book.add_book(req)
+            res = jsonify({"item": req, "message": msg})
+            if msg == "success":
+                return make_response(res, 200)
             else:
-                raise OperationalError
+                return make_response(res, 400)
         except Exception as err:
             return err
-        
 
-@app.route('/books/<int:id>', methods=['GET'])
-def book(id):
+
+@app.route('/<int:store_id>/books/<int:book_id>', methods=['GET', 'UPDATE', 'DELETE'])
+def book(store_id, book_id):
     
     if request.method == 'GET':
         try:
-            data = Book.get_book(id)
-            res = jsonify(data)
-            return res
+            data, msg = Book.get_book(store_id, book_id)
+            res = jsonify({
+                "items": data,
+                "length": len(data),
+                "message": msg
+            })
+            if msg == "success":
+                return make_response(res, 200)
+            elif msg == "Not Found!":
+                return make_response(res, 404)
+            else:
+                return make_response(res, 500)
         except Exception as err:
             return err
 
