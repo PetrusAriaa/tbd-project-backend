@@ -80,9 +80,18 @@ def authors():
     
     if request.method == 'GET':
         try:
-            data = Author.get_authors()
-            res = jsonify(data)
-            return res
+            data, msg = Author.get_authors()
+            res = jsonify({
+                "items": data,
+                "length": len(data),
+                "message": msg
+            })
+            if msg == "success":
+                return make_response(res, 200)
+            elif msg == "Not Found!":
+                return make_response(res, 404)
+            else:
+                return make_response(res, 500)
         except Exception as err:
             return err
 
@@ -99,7 +108,7 @@ def employees():
             return err
 
 
-@app.route('/stores/', methods=['GET'])
+@app.route('/stores', methods=['GET'])
 def stores():
     
     if request.method == 'GET':
