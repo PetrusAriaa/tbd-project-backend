@@ -24,6 +24,7 @@ class Book:
                     """)
             data = c.fetchall()
             msg = "success"
+            
             items = []
             for col in data:
                 book = {
@@ -100,12 +101,11 @@ class Book:
         book_name = str(req['book_name'])
         publication_year = int(req['publication_year'])
         pages = int(req['pages'])
-        pname = str(req['pname'])
+        publisher = str(req['pname'])
         quantity = int(req['quantity'])
         price = int(req['price'])
         
         try:
-            msg = "success"
             db = psycopg2.connect(host=CREDENTIALS['HOSTNAME'],
                                     port=CREDENTIALS['PORT'],
                                     database=CREDENTIALS['DATABASE'],
@@ -115,6 +115,7 @@ class Book:
             c = db.cursor()
             c.execute(f"""SELECT book_number, book_name FROM book""")
             books = c.fetchall()
+            msg = "success"
             
             _book_numbers = []
             _book_names = []
@@ -126,11 +127,73 @@ class Book:
                 book_number = max(_book_numbers)+1
                 c.execute(f"""INSERT INTO book (book_number, book_name, publication_year, pages, pname, price)
                       VALUES({book_number}, '{book_name}', {publication_year},
-                      {pages}, '{pname}', {price})""")
+                      {pages}, '{publisher}', {price})""")
                 c.execute(f"""INSERT INTO stock (store_id, book_name, quantity)
                           VALUES({store}, {book_number}, {quantity})""")
             else:
                 msg = "Book Exists"
+            
+            c.close()
+            db.commit()
+            db.close()
+            return msg
+        
+        except (psycopg2.Error, psycopg2.DatabaseError) as err:
+            c.close()
+            db.close()
+            return f'Error while connecting to PostgreSQL Database: {err}'
+    
+    
+    def delete_book(book_id):
+        try:
+            db = psycopg2.connect(host=CREDENTIALS['HOSTNAME'],
+                                    port=CREDENTIALS['PORT'],
+                                    database=CREDENTIALS['DATABASE'],
+                                    user=CREDENTIALS['USER'],
+                                    password=CREDENTIALS['PASSWORD']
+                                    )
+            c = db.cursor()
+            c.execute(f"""
+                      DELETE FROM stock WHERE book_id={book_id}
+                      """)
+            c.execute(f"""
+                      DELETE FROM book WHERE book_id={book_id}
+                      """)
+            msg = "success"
+            
+            c.close()
+            db.commit()
+            db.close()
+            return msg
+            
+        except (psycopg2.Error, psycopg2.DatabaseError) as err:
+            c.close()
+            db.close()
+            return f'Error while connecting to PostgreSQL Database: {err}'
+    
+    
+    def edit_book(req, book_id):
+        
+        book_name = str(req['book_name'])
+        publication_year = int(req['publication_year'])
+        pages = int(req['pages'])
+        publisher = str(req['pname'])
+        price = int(req['price'])
+        
+        try:
+            db = psycopg2.connect(host=CREDENTIALS['HOSTNAME'],
+                                    port=CREDENTIALS['PORT'],
+                                    database=CREDENTIALS['DATABASE'],
+                                    user=CREDENTIALS['USER'],
+                                    password=CREDENTIALS['PASSWORD']
+                                    )
+            c = db.cursor()
+            c.execute(f"""
+                      UPDATE book
+                      SET book_name='{book_name}', publication_year={publication_year}, pages={pages}, pname='{publisher}', price={price}
+                      WHERE book_number={book_id}
+                      """)
+            msg = "success"
             
             c.close()
             db.commit()
