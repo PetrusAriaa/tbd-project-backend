@@ -17,8 +17,9 @@ class Employee:
             c = db.cursor()
             c.execute('SELECT * FROM staff')
             data = c.fetchall()
+            msg = "success"
             
-            res = []
+            items = []
             for col in data:
                 staff = {
                     "staff_id": col[0],
@@ -28,16 +29,19 @@ class Employee:
                     "sex": col[4],
                     "is_manager": col[5],
                 }
-                res.append(staff)
+                items.append(staff)
+            
+            if len(items) == 0:
+                msg = "Not Found!"
             
             c.close()
             db.close()
             
-            return res
+            return items, msg
         
         except (psycopg2.Error, psycopg2.DatabaseError) as err:
             c.close()
             db.close()
-            return f'Error while connecting to PostgreSQL Database: {err}'
+            return [], f'Error while connecting to PostgreSQL Database: {err}'
     
     
