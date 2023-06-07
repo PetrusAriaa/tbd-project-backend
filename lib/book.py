@@ -1,5 +1,5 @@
 import psycopg2
-
+from werkzeug.datastructures import auth
 from config import CREDENTIALS
 
 
@@ -104,6 +104,7 @@ class Book:
         publisher = str(req['pname'])
         quantity = int(req['quantity'])
         price = int(req['price'])
+        author = str(req['penulis'])
         
         try:
             db = psycopg2.connect(host=CREDENTIALS['HOSTNAME'],
@@ -113,10 +114,10 @@ class Book:
                                     password=CREDENTIALS['PASSWORD']
                                     )
             c = db.cursor()
+            
             c.execute(f"""SELECT book_number, book_name FROM book""")
             books = c.fetchall()
             msg = "success"
-            
             _book_numbers = []
             _book_names = []
             for book in books:
@@ -128,8 +129,13 @@ class Book:
                 c.execute(f"""INSERT INTO book (book_number, book_name, publication_year, pages, pname, price)
                       VALUES({book_number}, '{book_name}', {publication_year},
                       {pages}, '{publisher}', {price})""")
-                c.execute(f"""INSERT INTO stock (store_id, book_name, quantity)
+                c.execute(f"""INSERT INTO stock (store_id, book_number, quantity)
                           VALUES({store}, {book_number}, {quantity})""")
+                c.execute(f"""SELECT author_number FROM author WHERE author_name='{author}'""")
+                auth_id = c.fetchone()
+                author_number = auth_id[0]
+                c.execute(f"""INSERT INTO wrote (bnum, authnum)
+                          VALUES({book_number}, {author_number})""")
             else:
                 msg = "Book Exists"
             
@@ -144,7 +150,7 @@ class Book:
             return f'Error while connecting to PostgreSQL Database: {err}'
     
     
-    def delete_book(book_id):
+    def delete_book(store_id, book_id):
         try:
             db = psycopg2.connect(host=CREDENTIALS['HOSTNAME'],
                                     port=CREDENTIALS['PORT'],
@@ -154,13 +160,9 @@ class Book:
                                     )
             c = db.cursor()
             c.execute(f"""
-                      DELETE FROM stock WHERE book_id={book_id}
-                      """)
-            c.execute(f"""
-                      DELETE FROM book WHERE book_id={book_id}
+                      DELETE FROM stock WHERE book_number={int(book_id)} AND store_id={int(store_id)}
                       """)
             msg = "success"
-            
             c.close()
             db.commit()
             db.close()
