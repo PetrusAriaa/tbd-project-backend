@@ -1,13 +1,12 @@
-from crypt import methods
+import json
 from flask import Flask, jsonify, make_response, request
 from flask_cors import CORS
-from psycopg2 import OperationalError
-
 from lib.author import Author
 from lib.book import Book
 from lib.employee import Employee
 from lib.store import Store
 from lib.transaction import Transaction
+from lib.publisher import Publisher
 
 app = Flask(__name__)
 CORS(app)
@@ -43,6 +42,7 @@ def books(store_id):
                 "pname": data.get('pname'),
                 "quantity": data.get('quantity'),
                 "price": data.get('price'),
+                "penulis": data.get('penulis') #restart server please
             }
             msg = Book.add_book(req)
             res = jsonify({"item": req, "message": msg})
@@ -73,7 +73,20 @@ def book(store_id, book_id):
                 return make_response(res, 500)
         except Exception as err:
             return err
-
+    
+    if request.method == 'DELETE':
+        try:
+            msg = Book.delete_book(store_id, book_id)
+            res = jsonify({"message":msg})
+            if msg == "success":
+                return make_response(res, 200)
+            elif msg == "Not Found!":
+                return make_response(res, 404)
+            else:
+                return make_response(res, 400)
+        except Exception as err:
+            return err
+            
 
 @app.route('/authors', methods=['GET'])
 def authors():
@@ -96,6 +109,25 @@ def authors():
             return err
 
 
+@app.route('/publishers', methods=['GET'])
+def publishers():
+    if request.method == 'GET':
+        try:
+            data, msg = Publisher.get_publishers()
+            res = jsonify({
+                "items": data,
+                "length": len(data),
+                "message": msg
+            })
+            if msg == "success":
+                return make_response(res, 200)
+            elif msg == "Not Found!":
+                return make_response(res, 404)
+            else:
+                return make_response(res, 500)
+        except Exception as err:
+            return err
+
 @app.route('/employees', methods=['GET'])
 def employees():
     
@@ -113,9 +145,38 @@ def stores():
     
     if request.method == 'GET':
         try:
-            data = Store.get_stores()
-            res = jsonify(data)
-            return res
+            data, msg = Store.get_stores()
+            res = jsonify({
+                "items": data,
+                "length": len(data),
+                "message": msg
+            })
+            if msg == "success":
+                return make_response(res, 200)
+            elif msg == "Not Found!":
+                return make_response(res, 404)
+            else:
+                return make_response(res, 500)
+        except Exception as err:
+            return err
+
+
+@app.route('/stores/<int:store_id>', methods=['GET'])
+def store(store_id):
+    if request.method == 'GET':
+        try:
+            data, msg = Store.get_store(store_id)
+            res = jsonify({
+                "items": data,
+                "length": len(data),
+                "message": msg
+            })
+            if msg == "success":
+                return make_response(res, 200)
+            elif msg == "Not Found!":
+                return make_response(res, 404)
+            else:
+                return make_response(res, 500)
         except Exception as err:
             return err
 
