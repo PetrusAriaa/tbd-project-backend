@@ -2,7 +2,7 @@
 .venv
 
 #private config
-config.py
+# config.py
 
 #cache
 __pycache__
